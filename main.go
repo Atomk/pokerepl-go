@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -10,7 +11,13 @@ import (
 type CliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*Context) error
+}
+
+// Contains URLs used for pagination.
+type Context struct {
+	Previous *string
+	Next     *string
 }
 
 var COMMANDS map[string]CliCommand
@@ -18,8 +25,12 @@ var COMMANDS map[string]CliCommand
 func main() {
 	COMMANDS = map[string]CliCommand{
 		"help": {"help", "Displays a help message", commandHelp},
+		"map":  {"map", "Display the next 20 Pokemon map locations", commandMapNext},
+		"mapb": {"mapb", "Display the previous 20 Pokemon map locations", commandMapPrevious},
 		"exit": {"exit", "Exit the Pokedex", commandExit},
 	}
+
+	var mapContext *Context
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -31,7 +42,7 @@ func main() {
 				commandName := words[0]
 				command, ok := COMMANDS[commandName]
 				if ok {
-					command.callback()
+					command.callback(mapContext)
 				} else {
 					fmt.Println("Unknown command")
 				}
@@ -40,7 +51,63 @@ func main() {
 	}
 }
 
-func commandHelp() error {
+func commandMapNext(context *Context) error {
+	if context == nil {
+		context = &Context{}
+	} else if context.Next == nil {
+		fmt.Println("you're on the last page")
+		return nil
+	}
+
+	result, err := getLocationAreas(context.Next)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	context.Previous = result.Previous
+	context.Next = result.Next
+
+	if len(result.Results) == 0 {
+		fmt.Println("No locations found")
+		return nil
+	}
+
+	for _, location := range result.Results {
+		fmt.Println(location.Name)
+	}
+
+	return nil
+}
+
+func commandMapPrevious(context *Context) error {
+	if context == nil {
+		context = &Context{}
+	} else if context.Previous == nil {
+		fmt.Println("you're on the first page")
+		return nil
+	}
+
+	result, err := getLocationAreas(context.Previous)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	context.Previous = result.Previous
+	context.Next = result.Next
+
+	if len(result.Results) == 0 {
+		fmt.Println("No locations found")
+		return nil
+	}
+
+	for _, location := range result.Results {
+		fmt.Println(location.Name)
+	}
+
+	return nil
+}
+
+func commandHelp(context *Context) error {
 	_, err := fmt.Println("Welcome to the Pokedex!\nUsage:\n")
 	if err != nil {
 		return err
@@ -51,7 +118,7 @@ func commandHelp() error {
 	return nil
 }
 
-func commandExit() error {
+func commandExit(context *Context) error {
 	_, err := fmt.Println("Closing the Pokedex... Goodbye!")
 	if err != nil {
 		return err
