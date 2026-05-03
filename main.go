@@ -108,12 +108,12 @@ func commandMapPrevious(context *Context) error {
 }
 
 func commandHelp(context *Context) error {
-	_, err := fmt.Println("Welcome to the Pokedex!\nUsage:\n")
+	_, err := fmt.Println("Welcome to the Pokedex!\nUsage:")
 	if err != nil {
 		return err
 	}
 	for _, val := range COMMANDS {
-		fmt.Printf("%s: %s\n", val.name, val.description)
+		fmt.Printf("  %s: %s\n", val.name, val.description)
 	}
 	return nil
 }
