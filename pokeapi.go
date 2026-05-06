@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	pokecache "github.com/atomk/pokedexcli/internal"
 )
 
 // Fields names MUST be exported (capitalized) otherwise unmarshaling will silently ignore them!
@@ -21,7 +23,11 @@ type LocationArea struct {
 	Url  string
 }
 
-func getLocationAreas(url *string) (LocationAreasResponse, error) {
+func getLocationAreas(url *string, cache *pokecache.Cache) (LocationAreasResponse, error) {
+	if cache == nil {
+		panic("cache is nil")
+	}
+
 	var stringUrl string
 	if url == nil {
 		fmt.Println("using default endpoint")
@@ -29,20 +35,26 @@ func getLocationAreas(url *string) (LocationAreasResponse, error) {
 	} else {
 		stringUrl = *url
 	}
-	res, err := http.Get(stringUrl)
-	if err != nil {
-		return LocationAreasResponse{}, err
-	}
-	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return LocationAreasResponse{}, err
+	bytes, ok := cache.Get(stringUrl)
+	if !ok {
+		response, err := http.Get(stringUrl)
+		if err != nil {
+			return LocationAreasResponse{}, err
+		}
+		defer response.Body.Close()
+
+		bytes, err = io.ReadAll(response.Body)
+		if err != nil {
+			return LocationAreasResponse{}, err
+		}
+
+		cache.Add(stringUrl, bytes)
 	}
 
 	// Unmarshal
 	var locations LocationAreasResponse
-	if err := json.Unmarshal(body, &locations); err != nil {
+	if err := json.Unmarshal(bytes, &locations); err != nil {
 		return LocationAreasResponse{}, err
 	}
 

@@ -6,6 +6,9 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
+
+	pokecache "github.com/atomk/pokedexcli/internal"
 )
 
 type CliCommand struct {
@@ -16,6 +19,7 @@ type CliCommand struct {
 
 // Contains URLs used for pagination.
 type Context struct {
+	cache    *pokecache.Cache
 	Previous *string
 	Next     *string
 }
@@ -30,6 +34,7 @@ func main() {
 		"exit": {"exit", "Exit the Pokedex", commandExit},
 	}
 
+	// Must be nil for the commands to know whether this is the first request
 	var mapContext *Context
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -53,13 +58,15 @@ func main() {
 
 func commandMapNext(context *Context) error {
 	if context == nil {
-		context = &Context{}
+		context = &Context{
+			cache: pokecache.NewCache(5 * time.Second),
+		}
 	} else if context.Next == nil {
 		fmt.Println("you're on the last page")
 		return nil
 	}
 
-	result, err := getLocationAreas(context.Next)
+	result, err := getLocationAreas(context.Next, context.cache)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,13 +88,15 @@ func commandMapNext(context *Context) error {
 
 func commandMapPrevious(context *Context) error {
 	if context == nil {
-		context = &Context{}
+		context = &Context{
+			cache: pokecache.NewCache(5 * time.Second),
+		}
 	} else if context.Previous == nil {
 		fmt.Println("you're on the first page")
 		return nil
 	}
 
-	result, err := getLocationAreas(context.Previous)
+	result, err := getLocationAreas(context.Previous, context.cache)
 	if err != nil {
 		log.Fatal(err)
 	}
