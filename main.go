@@ -18,6 +18,7 @@ type CliCommand struct {
 }
 
 // Contains URLs used for pagination.
+// If both previous and Next are null, no request was made to get location areas.
 type Context struct {
 	cache    *pokecache.Cache
 	Previous *string
@@ -34,8 +35,9 @@ func main() {
 		"exit": {"exit", "Exit the Pokedex", commandExit},
 	}
 
-	// Must be nil for the commands to know whether this is the first request
-	var mapContext *Context
+	mapContext := &Context{
+		cache: pokecache.NewCache(5 * time.Second),
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -57,11 +59,7 @@ func main() {
 }
 
 func commandMapNext(context *Context) error {
-	if context == nil {
-		context = &Context{
-			cache: pokecache.NewCache(5 * time.Second),
-		}
-	} else if context.Next == nil {
+	if context.Previous != nil && context.Next == nil {
 		fmt.Println("you're on the last page")
 		return nil
 	}
@@ -87,11 +85,7 @@ func commandMapNext(context *Context) error {
 }
 
 func commandMapPrevious(context *Context) error {
-	if context == nil {
-		context = &Context{
-			cache: pokecache.NewCache(5 * time.Second),
-		}
-	} else if context.Previous == nil {
+	if context.Next != nil && context.Previous == nil {
 		fmt.Println("you're on the first page")
 		return nil
 	}
