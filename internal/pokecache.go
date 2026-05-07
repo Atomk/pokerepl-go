@@ -64,7 +64,7 @@ func (c *Cache) reapLoop(interval time.Duration) {
 		for key, entry := range c.entries {
 			if tickTime.Sub(entry.createdAt) >= interval {
 				toDelete = append(toDelete, key)
-				log.Printf("found expired cache entry: %s", key)
+				log.Printf("found expired cache entry: %s\n", key)
 			}
 		}
 

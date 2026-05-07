@@ -80,7 +80,8 @@ func getLocationAreas(url *string, cache *pokecache.Cache) (LocationAreasRespons
 
 	var stringUrl string
 	if url == nil {
-		fmt.Println("using default endpoint")
+		// This will be used by default when no "next" or "previous" url
+		// are available, which is always the case on the first request.
 		stringUrl = "https://pokeapi.co/api/v2/location-area"
 	} else {
 		stringUrl = *url
