@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	pokecache "github.com/atomk/pokedexcli/internal"
 )
@@ -21,6 +22,55 @@ type LocationAreasResponse struct {
 type LocationArea struct {
 	Name string
 	Url  string
+}
+
+type LocationAreaDetails struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
+func getLocationArea(id string, cache *pokecache.Cache) (LocationAreaDetails, error) {
+	if cache == nil {
+		panic("cache is nil")
+	}
+
+	trimmedId := strings.TrimSpace(id)
+	if len(trimmedId) == 0 {
+		return LocationAreaDetails{}, fmt.Errorf("the provided name is an empty string")
+	}
+
+	url := "https://pokeapi.co/api/v2/location-area/" + id
+
+	bytes, ok := cache.Get(url)
+	if !ok {
+		response, err := http.Get(url)
+		if err != nil {
+			return LocationAreaDetails{}, err
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != 200 {
+			return LocationAreaDetails{}, fmt.Errorf("server responded with status %d", response.StatusCode)
+		}
+
+		bytes, err = io.ReadAll(response.Body)
+		if err != nil {
+			return LocationAreaDetails{}, err
+		}
+
+		cache.Add(url, bytes)
+	}
+
+	// Unmarshal
+	var location LocationAreaDetails
+	if err := json.Unmarshal(bytes, &location); err != nil {
+		return LocationAreaDetails{}, err
+	}
+
+	return location, nil
 }
 
 func getLocationAreas(url *string, cache *pokecache.Cache) (LocationAreasResponse, error) {

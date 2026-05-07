@@ -14,7 +14,7 @@ import (
 type CliCommand struct {
 	name        string
 	description string
-	callback    func(*Context) error
+	callback    func(*Context, []string) error
 }
 
 // Contains URLs used for pagination.
@@ -29,10 +29,11 @@ var COMMANDS map[string]CliCommand
 
 func main() {
 	COMMANDS = map[string]CliCommand{
-		"help": {"help", "Displays a help message", commandHelp},
-		"map":  {"map", "Display the next 20 Pokemon map locations", commandMapNext},
-		"mapb": {"mapb", "Display the previous 20 Pokemon map locations", commandMapPrevious},
-		"exit": {"exit", "Exit the Pokedex", commandExit},
+		"help":    {"help", "Displays a help message", commandHelp},
+		"map":     {"map", "Display the next 20 Pokemon map locations", commandMapNext},
+		"mapb":    {"mapb", "Display the previous 20 Pokemon map locations", commandMapPrevious},
+		"explore": {"explore", "Explore the area passed as an argument", commandExplore},
+		"exit":    {"exit", "Exit the Pokedex", commandExit},
 	}
 
 	mapContext := &Context{
@@ -47,9 +48,10 @@ func main() {
 			words := cleanInput(input)
 			if len(words) > 0 {
 				commandName := words[0]
+				arguments := words[1:]
 				command, ok := COMMANDS[commandName]
 				if ok {
-					command.callback(mapContext)
+					command.callback(mapContext, arguments)
 				} else {
 					fmt.Println("Unknown command")
 				}
@@ -58,7 +60,7 @@ func main() {
 	}
 }
 
-func commandMapNext(context *Context) error {
+func commandMapNext(context *Context, args []string) error {
 	if context.Previous != nil && context.Next == nil {
 		fmt.Println("you're on the last page")
 		return nil
@@ -84,7 +86,7 @@ func commandMapNext(context *Context) error {
 	return nil
 }
 
-func commandMapPrevious(context *Context) error {
+func commandMapPrevious(context *Context, args []string) error {
 	if context.Next != nil && context.Previous == nil {
 		fmt.Println("you're on the first page")
 		return nil
@@ -110,7 +112,34 @@ func commandMapPrevious(context *Context) error {
 	return nil
 }
 
-func commandHelp(context *Context) error {
+func commandExplore(context *Context, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("command `explore` requires exactly one argument")
+	}
+
+	idOrName := strings.TrimSpace(args[0])
+	if len(idOrName) == 0 {
+		return fmt.Errorf("provided argument is an empty string")
+	}
+
+	result, err := getLocationArea(idOrName, context.cache)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(result.PokemonEncounters) == 0 {
+		fmt.Println("no pokemon in this area")
+		return nil
+	}
+
+	for _, encounter := range result.PokemonEncounters {
+		fmt.Printf("- %s\n", encounter.Pokemon.Name)
+	}
+
+	return nil
+}
+
+func commandHelp(context *Context, args []string) error {
 	_, err := fmt.Println("Welcome to the Pokedex!\nUsage:")
 	if err != nil {
 		return err
@@ -121,7 +150,7 @@ func commandHelp(context *Context) error {
 	return nil
 }
 
-func commandExit(context *Context) error {
+func commandExit(context *Context, args []string) error {
 	_, err := fmt.Println("Closing the Pokedex... Goodbye!")
 	if err != nil {
 		return err
