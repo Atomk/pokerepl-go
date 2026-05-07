@@ -37,7 +37,7 @@ func main() {
 	}
 
 	mapContext := &Context{
-		cache: pokecache.NewCache(5 * time.Second),
+		cache: pokecache.NewCache(5 * time.Minute),
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
