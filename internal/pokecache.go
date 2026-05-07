@@ -59,7 +59,6 @@ func (c *Cache) reapLoop(interval time.Duration) {
 
 	for tickTime := range ticker.C {
 		c.mutex.Lock()
-		defer c.mutex.Unlock()
 
 		toDelete := []string{}
 		for key, entry := range c.entries {
@@ -72,5 +71,7 @@ func (c *Cache) reapLoop(interval time.Duration) {
 		for _, key := range toDelete {
 			delete(c.entries, key)
 		}
+
+		c.mutex.Unlock()
 	}
 }
