@@ -134,3 +134,49 @@ func getLocationAreas_(limit, page int) (LocationAreasResponse, error) {
 
 	return locations, nil
 }
+
+// https://pokeapi.co/docs/v2#pokemon
+type Pokemon struct {
+	BaseExperience uint `json:"base_experience"`
+}
+
+func getPokemon(name string, cache *pokecache.Cache) (Pokemon, error) {
+	if cache == nil {
+		panic("cache is nil")
+	}
+
+	trimmedId := strings.TrimSpace(name)
+	if len(trimmedId) == 0 {
+		return Pokemon{}, fmt.Errorf("the provided name is an empty string")
+	}
+
+	url := "https://pokeapi.co/api/v2/pokemon/" + name
+
+	bytes, ok := cache.Get(url)
+	if !ok {
+		response, err := http.Get(url)
+		if err != nil {
+			return Pokemon{}, err
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != 200 {
+			return Pokemon{}, fmt.Errorf("server responded with status %d", response.StatusCode)
+		}
+
+		bytes, err = io.ReadAll(response.Body)
+		if err != nil {
+			return Pokemon{}, err
+		}
+
+		cache.Add(url, bytes)
+	}
+
+	// Unmarshal
+	var pokemon Pokemon
+	if err := json.Unmarshal(bytes, &pokemon); err != nil {
+		return Pokemon{}, err
+	}
+
+	return pokemon, nil
+}

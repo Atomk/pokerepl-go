@@ -21,6 +21,7 @@ func main() {
 		"map":     {"map", "Display the next 20 Pokemon map locations", commandMapNext},
 		"mapb":    {"mapb", "Display the previous 20 Pokemon map locations", commandMapPrevious},
 		"explore": {"explore", "Explore the area passed as an argument", commandExplore},
+		"catch":   {"catch", "Try to catch a pokemon by name", commandCatch},
 		"exit":    {"exit", "Exit the Pokedex", commandExit},
 	}
 

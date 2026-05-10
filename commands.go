@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -14,13 +15,15 @@ import (
 // If both previous and Next are null, no request was made to get location areas.
 type Context struct {
 	cache    *pokecache.Cache
+	Pokedex  map[string]Pokemon
 	Previous *string
 	Next     *string
 }
 
 func NewContext(minutes uint) *Context {
 	return &Context{
-		cache: pokecache.NewCache(time.Duration(minutes) * time.Minute),
+		cache:   pokecache.NewCache(time.Duration(minutes) * time.Minute),
+		Pokedex: map[string]Pokemon{},
 	}
 }
 
@@ -98,6 +101,65 @@ func commandExplore(context *Context, args []string) error {
 
 	for _, encounter := range result.PokemonEncounters {
 		fmt.Printf("- %s\n", encounter.Pokemon.Name)
+	}
+
+	return nil
+}
+
+func commandCatch(context *Context, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("command `catch` requires exactly one argument")
+	}
+
+	pokemonName := strings.TrimSpace(args[0])
+	if len(pokemonName) == 0 {
+		return fmt.Errorf("provided argument is an empty string")
+	}
+
+	result, err := getPokemon(pokemonName, context.cache)
+	if err != nil {
+		return fmt.Errorf("could not get data about `%s`: %v", pokemonName, err)
+	}
+
+	/*
+		Base experience:
+		- caterpie: 39
+		- magikarp: 40
+		- dragonite, mew: 270
+		- mewtwo, rayquaza: 306
+		- arceus: 324
+		min: 39, max: 324
+
+		So `324 / baseExp`` is always >= 1
+		I want 324 to mean 1% probability to capture with a throw.
+		With this formula minimum catch probability is 324/39 ~= 8.3.
+		That's too low, so I multiply by a constant.
+	*/
+	threshold := (324 / float64(result.BaseExperience)) * 7
+	if threshold > 100 {
+		threshold = 100
+	}
+	fmt.Println("base experience:", result.BaseExperience)
+	fmt.Println("threshold:", threshold)
+	catched := false
+	for _ = range 5 {
+		fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+
+		if rand.Intn(100) <= int(threshold) {
+			fmt.Println("Catched!")
+			if _, ok := context.Pokedex[pokemonName]; !ok {
+				fmt.Println("New Pokemon! Adding data to the Pokedex")
+				context.Pokedex[pokemonName] = Pokemon{}
+			} else {
+				fmt.Println("You already catched this Pokemon")
+			}
+			catched = true
+			break
+		}
+	}
+
+	if !catched {
+		fmt.Printf("%s fleed!\n", pokemonName)
 	}
 
 	return nil
