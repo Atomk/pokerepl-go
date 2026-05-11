@@ -152,13 +152,23 @@ func commandCatch(context *Context, args []string) error {
 		With this formula minimum catch probability is 324/39 ~= 8.3.
 		That's too low, so I multiply by a constant.
 	*/
-	threshold := (324 / float64(pokemon.BaseExperience)) * 7
+	threshold := (324 / float64(pokemon.BaseExperience)) * 6.5
 	if threshold > 100 {
 		threshold = 100
 	}
 	fmt.Printf("Catch odds: %.2f%%\n", threshold)
 	catched := false
-	for _ = range 5 {
+	var maxTries uint
+	if pokemon.BaseExperience >= 250 {
+		maxTries = 2
+	} else if pokemon.BaseExperience >= 220 {
+		maxTries = 3
+	} else if pokemon.BaseExperience >= 140 {
+		maxTries = 4
+	} else {
+		maxTries = 5
+	}
+	for _ = range maxTries {
 		fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
 
 		if rand.Intn(100) <= int(threshold) {
