@@ -41,6 +41,7 @@ func main() {
 				command, ok := COMMANDS[commandName]
 				if ok {
 					command.callback(mapContext, arguments)
+					fmt.Println()
 				} else {
 					fmt.Println("Unknown command")
 				}
