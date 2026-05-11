@@ -156,8 +156,7 @@ func commandCatch(context *Context, args []string) error {
 	if threshold > 100 {
 		threshold = 100
 	}
-	fmt.Println("base experience:", pokemon.BaseExperience)
-	fmt.Println("threshold:", threshold)
+	fmt.Printf("Catch odds: %.2f%%\n", threshold)
 	catched := false
 	for _ = range 5 {
 		fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
