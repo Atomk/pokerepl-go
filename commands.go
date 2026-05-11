@@ -29,11 +29,10 @@ func NewContext(minutes uint) *Context {
 
 // Prints some data about a Pokemon.
 func (p Pokemon) Print() {
-	nameCapitalized := strings.ToUpper(p.Name[:1]) + p.Name[1:]
 	fmt.Printf(`Name: %s
 Height: %d
 Weight: %d
-`, nameCapitalized, p.Height, p.Weight)
+`, p.CapitalizedName(), p.Height, p.Weight)
 	fmt.Println("Stats:")
 	for _, stat := range p.Stats {
 		fmt.Printf("  - %s: %d\n", stat.Stat.Name, stat.BaseStat)
@@ -42,6 +41,10 @@ Weight: %d
 	for _, typ := range p.Types {
 		fmt.Println("  -", typ.Type.Name)
 	}
+}
+
+func (p Pokemon) CapitalizedName() string {
+	return strings.ToUpper(p.Name[:1]) + p.Name[1:]
 }
 
 func commandMapNext(context *Context, args []string) error {
@@ -209,6 +212,21 @@ func commandInspect(context *Context, args []string) error {
 	}
 
 	pokemon.Print()
+	return nil
+}
+
+func commandPokedex(context *Context, args []string) error {
+	pokemonCount := len(context.Pokedex)
+	if pokemonCount == 0 {
+		fmt.Println("Your Pokedex is empty. Go catch some Pokemon!")
+		return nil
+	}
+
+	fmt.Printf("You caught %d Pokemon:\n", pokemonCount)
+	for _, pokemon := range context.Pokedex {
+		fmt.Printf("  - %s\n", pokemon.CapitalizedName())
+	}
+
 	return nil
 }
 

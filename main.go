@@ -23,6 +23,7 @@ func main() {
 		"explore": {"explore", "Explore the area passed as an argument", commandExplore},
 		"inspect": {"inspect", "Get information about a pokemon", commandInspect},
 		"catch":   {"catch", "Try to catch a pokemon by name", commandCatch},
+		"pokedex": {"pokedex", "List all caught pokemon", commandPokedex},
 		"exit":    {"exit", "Exit the Pokedex", commandExit},
 	}
 
