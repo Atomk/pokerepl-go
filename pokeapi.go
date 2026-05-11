@@ -137,7 +137,21 @@ func getLocationAreas_(limit, page int) (LocationAreasResponse, error) {
 
 // https://pokeapi.co/docs/v2#pokemon
 type Pokemon struct {
-	BaseExperience uint `json:"base_experience"`
+	Name           string `json:"name"`
+	Height         uint   `json:"height"`
+	Weight         uint   `json:"weight"`
+	BaseExperience uint   `json:"base_experience"`
+	Stats          []struct {
+		BaseStat uint `json:"base_stat"`
+		Stat     struct {
+			Name string `json:"name"`
+		} `json:"stat"`
+	} `json:"stats"`
+	Types []struct {
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
+	} `json:"types"`
 }
 
 func getPokemon(name string, cache *pokecache.Cache) (Pokemon, error) {

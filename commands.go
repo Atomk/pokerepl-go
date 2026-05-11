@@ -27,6 +27,23 @@ func NewContext(minutes uint) *Context {
 	}
 }
 
+// Prints some data about a Pokemon.
+func (p Pokemon) Print() {
+	nameCapitalized := strings.ToUpper(p.Name[:1]) + p.Name[1:]
+	fmt.Printf(`Name: %s
+Height: %d
+Weight: %d
+`, nameCapitalized, p.Height, p.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range p.Stats {
+		fmt.Printf("  - %s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, typ := range p.Types {
+		fmt.Println("  -", typ.Type.Name)
+	}
+}
+
 func commandMapNext(context *Context, args []string) error {
 	if context.Previous != nil && context.Next == nil {
 		fmt.Println("you're on the last page")
@@ -111,12 +128,12 @@ func commandCatch(context *Context, args []string) error {
 		return fmt.Errorf("command `catch` requires exactly one argument")
 	}
 
-	pokemonName := strings.TrimSpace(args[0])
+	pokemonName := strings.TrimSpace(strings.ToLower(args[0]))
 	if len(pokemonName) == 0 {
 		return fmt.Errorf("provided argument is an empty string")
 	}
 
-	result, err := getPokemon(pokemonName, context.cache)
+	pokemon, err := getPokemon(pokemonName, context.cache)
 	if err != nil {
 		return fmt.Errorf("could not get data about `%s`: %v", pokemonName, err)
 	}
@@ -135,11 +152,11 @@ func commandCatch(context *Context, args []string) error {
 		With this formula minimum catch probability is 324/39 ~= 8.3.
 		That's too low, so I multiply by a constant.
 	*/
-	threshold := (324 / float64(result.BaseExperience)) * 7
+	threshold := (324 / float64(pokemon.BaseExperience)) * 7
 	if threshold > 100 {
 		threshold = 100
 	}
-	fmt.Println("base experience:", result.BaseExperience)
+	fmt.Println("base experience:", pokemon.BaseExperience)
 	fmt.Println("threshold:", threshold)
 	catched := false
 	for _ = range 5 {
@@ -149,7 +166,7 @@ func commandCatch(context *Context, args []string) error {
 			fmt.Println("Catched!")
 			if _, ok := context.Pokedex[pokemonName]; !ok {
 				fmt.Println("New Pokemon! Adding data to the Pokedex")
-				context.Pokedex[pokemonName] = Pokemon{}
+				context.Pokedex[pokemonName] = pokemon
 			} else {
 				fmt.Println("You already catched this Pokemon")
 			}
@@ -162,6 +179,27 @@ func commandCatch(context *Context, args []string) error {
 		fmt.Printf("%s fleed!\n", pokemonName)
 	}
 
+	return nil
+}
+
+// Prints data about an already caught Pokemon.
+func commandInspect(context *Context, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("command `inspect` requires exactly one argument")
+	}
+
+	pokemonName := strings.TrimSpace(strings.ToLower(args[0]))
+	if len(pokemonName) == 0 {
+		return fmt.Errorf("provided argument is an empty string")
+	}
+
+	pokemon, ok := context.Pokedex[pokemonName]
+	if !ok {
+		fmt.Printf("You must catch `%s` to know more about this Pokemon!\n", pokemonName)
+		return nil
+	}
+
+	pokemon.Print()
 	return nil
 }
 
