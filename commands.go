@@ -172,7 +172,7 @@ func commandCatch(context *Context, args []string) error {
 		maxTries = 5
 	}
 	for _ = range maxTries {
-		fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+		fmt.Printf("Throwing a pokeball at %s...\n", pokemon.CapitalizedName())
 
 		if rand.Intn(100) <= int(threshold) {
 			fmt.Println("Catched!")
