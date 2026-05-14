@@ -160,7 +160,7 @@ func commandCatch(context *Context, args []string) error {
 		threshold = 100
 	}
 	fmt.Printf("Catch odds: %.2f%%\n", threshold)
-	catched := false
+	caught := false
 	var maxTries uint
 	if pokemon.BaseExperience >= 250 {
 		maxTries = 2
@@ -175,19 +175,19 @@ func commandCatch(context *Context, args []string) error {
 		fmt.Printf("Throwing a pokeball at %s...\n", pokemon.CapitalizedName())
 
 		if rand.Intn(100) <= int(threshold) {
-			fmt.Println("Catched!")
+			fmt.Println("Caught!")
 			if _, ok := context.Pokedex[pokemonName]; !ok {
 				fmt.Println("New Pokemon! Adding data to the Pokedex")
 				context.Pokedex[pokemonName] = pokemon
 			} else {
-				fmt.Println("You already catched this Pokemon")
+				fmt.Println("You already caught this Pokemon")
 			}
-			catched = true
+			caught = true
 			break
 		}
 	}
 
-	if !catched {
+	if !caught {
 		fmt.Printf("%s fleed!\n", pokemonName)
 	}
 
