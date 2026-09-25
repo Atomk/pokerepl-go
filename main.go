@@ -28,19 +28,36 @@ func main() {
 	}
 
 	mapContext := NewContext(5)
+	// Commands history. The most recent entry is always history[-1]
+	history := NewHistory()
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Pokedex > ")
+		// Issue: this reads when you press Enter but to detect arrows we need
+		// a different approach.
 		if scanner.Scan() {
-			input := scanner.Text()
+			input := strings.TrimSpace(scanner.Text())
 			words := cleanInput(input)
+			if len(words) == 0 {
+				continue
+			}
+			if len(words) == 1 && words[0] == "\x1b[A" {
+				if history.Count() > 0 {
+					fmt.Printf("\r%s", history.Previous())
+				}
+			}
 			if len(words) > 0 {
 				commandName := words[0]
 				arguments := words[1:]
 				command, ok := COMMANDS[commandName]
 				if ok {
-					command.callback(mapContext, arguments)
+					history.Add(input)
+
+					err := command.callback(mapContext, arguments)
+					if err != nil {
+						fmt.Println(err)
+					}
 					fmt.Println()
 				} else {
 					fmt.Println("Unknown command")
